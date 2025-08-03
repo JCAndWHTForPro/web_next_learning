@@ -386,3 +386,23 @@ func main() {
 }
 
 ```
+
+
+14. go里面针对结构体（其实就是c里面的）的一些思索
+```go
+
+// 使用指针类型，修改会影响原变量
+func modifyPointer(sw *StringWriter) {
+    /**
+        两种写法效果完全相同，这种是go的语法糖
+	当你有一个结构体指针 sw *StringWriter 时，
+	Go 允许你直接使用 sw.buffer 来访问结构体字段，
+	而无需显式写成 (*sw).buffer。
+	编译器会自动帮你完成指针解引用的操作，
+	这是 Go 为了简化代码而设计的语法规则。两种写法在语义上完全等价
+     */
+    sw.buffer = "modified"
+    // (*sw).buffer = "modified"
+}
+
+```
