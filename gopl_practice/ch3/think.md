@@ -152,3 +152,114 @@ fmt.Printf("Is v4 any infinity? %t\n", math.IsInf(v4, 0))     // 输出: Is v4 a
 | **最小正数 `float64`**| `math.SmallestNonzeroFloat64` | `val == math.SmallestNonzeroFloat64`| 有限的、最接近0的正数 |
 
 掌握这些函数的使用，可以让你编写出非常健壮、能够正确处理浮点数运算中各种边界情况的 Go 程序。
+
+
+## 无类型常量的深入
+好的，无类型常量（Untyped Constants）是 Go 语言一个非常独特且强大的特性，初看时确实容易让人困惑。它解决了其他静态语言（如 C++/Java）中一个常见的“烦恼”。
+
+我们还是用一个简单的比喻来开始，然后深入细节。
+
+---
+
+### 比喻：一个“万能”的数字
+
+想象一下，在 Go 语言里，当你写下一个**常量面值**（比如 `100` 或 `3.14`）时，这个常量在诞生之初，它并不是一个严格的 `int` 或 `float64`。
+
+**你可以把它想象成一个“纯粹的、高精度的、万能的数学概念”**。
+
+*   `const Pi = 3.14`：这里的 `Pi` 不是 `float64`，它就是数学概念上的“三点一四”，精度要多高有多高。
+*   `const MaxSize = 1024`：这里的 `MaxSize` 不是 `int`，它就是数学概念上的“一千零二十四”。
+
+这个“万能概念”非常灵活，它会**延迟（delay）**自己的类型确定，直到它被用在一个需要明确类型的上下文里。那时，它才会“变形”成最适合那个上下文的类型。
+
+---
+
+### 为什么需要这个特性？—— 解决“烦恼”
+
+在 C++ 或 Java 里，你可能会遇到这样的问题：
+```c++
+const double PI = 3.14159;
+int radius = 5;
+double circumference = 2 * PI * radius; // 错误！不能用一个 double 和一个 int 直接相乘
+```
+你必须做显式的类型转换 `2 * PI * (double)radius`。这很繁琐。
+
+Go 的无类型常量优雅地解决了这个问题。
+
+### Go 的无类型常量如何工作？
+
+我们来看 Go 的代码，并分析那个“万能概念”是如何“变形”的。
+
+```go
+package main
+
+import "fmt"
+
+// MaxSize 是一个无类型的整数常量。它只是数字 1024。
+const MaxSize = 1024
+
+// Pi 是一个无类型的浮点数常量。它只是数字 3.14。
+const Pi = 3.14
+
+func main() {
+    // 场景一：MaxSize 遇到了一个需要 int 的地方
+    var anInt int = MaxSize 
+    // MaxSize 发现：“哦，右边需要一个 int，我 1024 可以完美地变成 int。”
+    // 于是 MaxSize 在这里“变形”成了 int 类型。
+    fmt.Printf("anInt: %T, %d\n", anInt, anInt) // 输出: anInt: int, 1024
+
+    // 场景二：MaxSize 遇到了一个需要 float64 的地方
+    var aFloat64 float64 = MaxSize
+    // MaxSize 发现：“哦，右边需要一个 float64，我 1024 也可以完美地变成 float64。”
+    // 于是 MaxSize 在这里“变形”成了 float64 类型。
+    fmt.Printf("aFloat64: %T, %f\n", aFloat64, aFloat64) // 输出: aFloat64: float64, 1024.000000
+
+    // 场景三：无类型常量之间的混合运算 (最神奇的地方!)
+    // result := 2 * Pi * MaxSize // 假设有这么一个运算
+    // 这里的 2、Pi、MaxSize 全都是无类型的“万能概念”。
+    // Go 会用非常高的精度来计算它们的结果。
+    // 只有在最后需要把结果赋值给一个有类型的变量时，
+    // 最终结果才会“变形”并接受类型检查。
+
+    var someResult float64 = 2 * Pi * MaxSize
+    // Go 内部计算: 2 * 3.14 * 1024 = 6530.56 (高精度计算)
+    // 然后发现需要赋值给一个 float64，于是 6530.56 变形为 float64。
+    fmt.Printf("someResult: %T, %f\n", someResult, someResult) // 输出: someResult: float64, 6530.560000
+
+    // 场景四：如果“变形”失败会怎样？
+    // var anInt8 int8 = MaxSize // MaxSize 是 1024
+    // MaxSize 发现：“哦，右边需要一个 int8，但 int8 的最大值是 127。”
+    // “我 1024 太大了，塞不进去！变形失败！”
+    // 这行代码会导致编译错误: constant 1024 overflows int8
+}
+```
+
+### 有类型常量 (Typed Constants)
+
+你也可以在声明常量时就给它一个明确的类型，剥夺它的“万能性”。
+
+```go
+const TypedPi float64 = 3.14 // TypedPi 从诞生起就是一个 float64
+const TypedSize int = 1024     // TypedSize 从诞生起就是一个 int
+```
+现在，它们就和普通的变量一样，遵循严格的类型匹配规则。
+
+```go
+var anotherFloat float64 = TypedSize // 错误！不能把一个 int 类型的常量赋值给 float64 变量
+                                    // 必须写成 float64(TypedSize)
+```
+
+### 总结：无类型常量的核心优势
+
+1.  **灵活性 (Flexibility)**：它们可以自由地与不同类型的变量混合使用，只要它们的值在那个类型的表示范围内。这大大减少了不必要的显式类型转换，让代码更简洁。
+2.  **高精度 (High Precision)**：在常量表达式的计算过程中，Go 会使用比标准类型（如 `float64`）更高的精度来计算，只有在最后赋值时才会发生可能的精度损失。这避免了中间计算步骤的误差累积。
+
+### 概括的表格
+
+| 概念 | 简单概括 | Go 代码示例 |
+| :--- | :--- | :--- |
+| **无类型常量** (Untyped Constant) | 一个**高精度的、临时的“万能数学概念”**，它会**延迟**确定自己的类型，直到被用在一个需要明确类型的上下文中。 | `const N = 10` (N 可以是 int, int8, float64...) |
+| **有类型常量** (Typed Constant) | 从声明的那一刻起，就**被赋予了明确的类型**，失去了“万能性”，遵循严格的类型规则。 | `const N int = 10` (N 永远是 int) |
+| **默认类型** | 如果一个无类型常量最终没有被明确的上下文赋予类型（比如直接打印它），它会有一个**默认类型**：`bool`, `rune`, `int`, `float64`, `complex128`, 或 `string`。| `fmt.Printf("%T", 10)` -> `int`<br>`fmt.Printf("%T", 3.14)` -> `float64` |
+
+**简单记住**：Go 的无类型常量就像一团“橡皮泥”，在放入一个模子（有类型的变量）之前，它可以是任何形状。而有类型常量就像一块“砖头”，形状从一开始就固定了。
