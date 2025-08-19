@@ -350,3 +350,78 @@ func init() {
 **允许一个包内有多个 `init` 函数，是 Go 为了提升代码模块化、解耦和可维护性而做出的一个非常明智的设计决策。**
 
 它将“初始化”这个行为分散到了各个相关的代码文件中，避免了创建一个庞大、臃肿、难以维护的中央 `init` 函数，从而让开发者能够编写出逻辑更清晰、内聚性更高的代码。
+
+
+## 三、go里面自定义类型推荐的排序方式
+在Go中，除了直接实现`sort.Interface`接口外，还有更便捷的方式对自定义类型进行排序，特别是通过`sort.Slice()`和`sort.SliceStable()`函数，它们允许直接传入比较函数，无需显式实现接口方法，使用起来更加简洁。
+
+### 便捷排序方法：sort.Slice()
+`sort.Slice()` 接受一个切片和一个比较函数 `func(i, j int) bool`，直接根据比较函数对切片进行排序，无需定义额外的接口实现。
+
+示例如下：
+
+
+```go
+package main
+
+import (
+	"fmt"
+	"sort"
+)
+
+// 定义自定义结构体
+type Person struct {
+	Name string
+	Age  int
+	Score float64
+}
+
+func main() {
+	people := []Person{
+		{Name: "Bob", Age: 25, Score: 85.5},
+		{Name: "Alice", Age: 30, Score: 92.0},
+		{Name: "Charlie", Age: 22, Score: 78.3},
+	}
+
+	// 1. 按年龄升序排序
+	sort.Slice(people, func(i, j int) bool {
+		return people[i].Age < people[j].Age
+	})
+	fmt.Println("按年龄升序:")
+	for _, p := range people {
+		fmt.Printf("%s (年龄: %d, 分数: %.1f)\n", p.Name, p.Age, p.Score)
+	}
+
+	// 2. 按分数降序排序
+	sort.Slice(people, func(i, j int) bool {
+		return people[i].Score > people[j].Score
+	})
+	fmt.Println("\n按分数降序:")
+	for _, p := range people {
+		fmt.Printf("%s (年龄: %d, 分数: %.1f)\n", p.Name, p.Age, p.Score)
+	}
+
+	// 3. 按姓名字典序排序
+	sort.Slice(people, func(i, j int) bool {
+		return people[i].Name < people[j].Name
+	})
+	fmt.Println("\n按姓名字典序:")
+	for _, p := range people {
+		fmt.Printf("%s (年龄: %d, 分数: %.1f)\n", p.Name, p.Age, p.Score)
+	}
+}
+
+```
+
+
+### 特点说明：
+1. **无需实现接口**：相比传统方式，不需要为自定义类型实现`Len()`、`Less()`、`Swap()`三个方法，直接通过匿名函数定义比较逻辑。
+2. **灵活性高**：可以随时根据需求修改排序逻辑（如升序/降序、按不同字段排序），无需修改结构体定义。
+3. **稳定性选择**：如果需要稳定排序（相等元素保持原有顺序），可以使用`sort.SliceStable()`，用法与`sort.Slice()`完全一致。
+
+### 适用场景：
+- 临时排序需求，不需要复用排序逻辑
+- 排序条件多变的场景
+- 希望代码更简洁、可读性更高的情况
+
+这种方式是Go 1.8+引入的，目前已成为自定义类型排序的推荐方式，既方便又高效。
