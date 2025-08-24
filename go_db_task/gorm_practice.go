@@ -55,6 +55,8 @@ type Post struct {
 	Comments      []Comment `gorm:"foreignKey:PostID"`              // 关联的评论（一对多）
 }
 
+
+
 // Comment 模型（评论）
 type Comment struct {
 	//ID        uint           `gorm:"primarykey"` // 主键ID
