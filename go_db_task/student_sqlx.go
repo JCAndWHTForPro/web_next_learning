@@ -15,6 +15,8 @@ import (
   - 编写SQL语句查询 students 表中所有年龄大于 18 岁的学生信息。
   - 编写SQL语句将 students 表中姓名为 "张三" 的学生年级更新为 "四年级"。
   - 编写SQL语句删除 students 表中年龄小于 15 岁的学生记录。
+
+（Sqlx入门的题目1和题目2，proctice的点都一样，就不做练习）
 */
 func insertOneInfo(conn *sqlx.DB) int64 {
 	sql := "insert into students (name,age,grade) values(?,?,?)"
