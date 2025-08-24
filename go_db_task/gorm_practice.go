@@ -47,12 +47,12 @@ type Post struct {
 	//UpdatedAt time.Time      // 更新时间
 	//DeletedAt gorm.DeletedAt `gorm:"index"`                      // 软删除标记（索引）
 	gorm.Model
-	Title         string    `gorm:"type:varchar(200);not null"`        // 文章标题（非空）
-	Content       string    `gorm:"type:text;not null"`                // 文章内容（非空）
-	UserID        uint      `gorm:"not null;index"`                    // 关联的用户ID（外键、索引）
+	Title         string    `gorm:"type:varchar(200);not null"`     // 文章标题（非空）
+	Content       string    `gorm:"type:text;not null"`             // 文章内容（非空）
+	UserID        uint      `gorm:"not null;index"`                 // 关联的用户ID（外键、索引）
 	CommentStatus string    `gorm:"type:varchar(20);default:'有评论'"` // 新增：评论状态
-	User          UserBlob  `gorm:"foreignKey:UserID"`                 // 关联的用户（多对一）
-	Comments      []Comment `gorm:"foreignKey:PostID"`                 // 关联的评论（一对多）
+	User          UserBlob  `gorm:"foreignKey:UserID"`              // 关联的用户（多对一）
+	Comments      []Comment `gorm:"foreignKey:PostID"`              // 关联的评论（一对多）
 }
 
 // Comment 模型（评论）
